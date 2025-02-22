@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.min.js"></script>
+
+</head>
+
+<body class="body">
+    <div class="navBar">
+        <img class="logo" src="fulllogo.png" alt="Logo" onclick="reload()">
+        <input type="file" id="fileUpload" class="fileInput">
+        <label for="fileUpload" class="fileUpload">
+            <i class="fas fa-upload"></i> &nbsp;&nbsp; Upload File
+        </label>
+        <div id="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p id="loading-message">Uploading...</p> <!-- Message area -->
+        </div>
+    </div>
+    <div class="filesAndCont">
+        <div class="column1">
+            <p>Recent Files</p>
+            <div class="recentFiles" id="recentFiles">           
+                <!-- Files will be displayed here -->
+            </div>
+        </div>
+        <div class="column2">
+            <div class="tableContent">
+                <div class="searchBarCont">
+                    <div class="searchBar">
+                        <input type="search" id="keywordSearch" placeholder="Search tables by keywords...">
+                        <i class="fa-solid fa-magnifying-glass" onclick="handleSearch()"></i>
+                    </div>
+                </div>
+                <div class="table" id="tableDisplay">
+                    <!-- Search results table will be displayed here -->
+                     <img src="47718913_9170826.jpg" alt="No Data Found" class="noDataFound">
+                </div>
+            </div>
+            <div class="document">
+                <div>
+                    <p class="docHead">Document</p>
+                </div>
+                <div class="showDoc">
+                    <img src="47718913_9170826.jpg" alt="No Data Found" class="noDataFoundDoc">
+
+                    <!-- <iframe id="pdfViewer" src="21583473018.pdf" frameborder="5px" height="610px" width="99%"></iframe> -->
+                     <!-- <img src="dummy_page-0001.jpg" alt="Img" height="600px"> -->
+                      
+                     <!-- <canvas id="pdfCanvas"></canvas> -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for functionality -->
+    <script src="index.js"></script>
+</body>
+
+</html>
