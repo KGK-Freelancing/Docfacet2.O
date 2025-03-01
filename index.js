@@ -151,6 +151,7 @@ function renderFiles() {
 
 
 // Handle Search Functionality
+pdfObjectUrl = "";
 async function handleSearch() {
     const searchValue = searchInput.value.trim();
     const selectedFile = document.querySelector('input[name="recentFile"]:checked');
@@ -179,15 +180,16 @@ async function handleSearch() {
             const data = await response.json();
             displaySearchResults(data);
 
-            //PDF URL
-            console.log(data.object_url);
-            if (!pdfFile.src || pdfFile.src === "") {
-                pdfSrc = data.object_url;
-                pdfFile.src = `${pdfSrc}#page=1`; // Load PDF on the first page initially
-            } else {
-                pdfSrc = data.object_url;
-                pdfFile.dataset.src = pdfSrc;
-            }
+            // PDF URL
+            pdfObjectUrl = data.object_url;
+            console.log("New PDF URL:", pdfObjectUrl);
+
+            // Reset the PDF iframe to force reload
+            pdfFile.src = "";
+            setTimeout(() => {
+                pdfFile.src = `${pdfObjectUrl}#page=1`; // Load PDF from the first page
+                pdfFile.dataset.src = pdfObjectUrl;
+            }, 100); // Small delay to ensure refresh
 
         } catch (error) {
             tableDisplay.innerHTML = `<p class="NoData">Result : ${error.message}</p>`;
@@ -197,6 +199,7 @@ async function handleSearch() {
         alert("Please select a file and enter a keyword to search.");
     }
 }
+
 
 // Display Search Results in Table
 function displaySearchResults(data) {
@@ -261,6 +264,8 @@ function highlightSpecificKeyword(text, keyword) {
 
 //--------------------------------------------------------------------------------------------------------------
 function showPdfPage(pageNum) {
+    console.log("pdfObjectUrl " + pdfObjectUrl);
+    
     console.log("Navigating to page:", pageNum);
 
     // Ensure pdfFile is a valid embedded PDF object
@@ -271,7 +276,7 @@ function showPdfPage(pageNum) {
 
     // Ensure the PDF URL is stored correctly
     let baseUrl = pdfFile.dataset.src || pdfFile.src.split('#')[0];
-
+    // let baseUrl = pdfObjectUrl;
     // Check if baseUrl is an actual PDF URL (not your webpage URL)
     if (!baseUrl.endsWith(".pdf")) {
         console.error("Invalid PDF URL detected:", baseUrl);
