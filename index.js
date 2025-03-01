@@ -3,25 +3,31 @@ const fileUploadInput = document.getElementById("fileUpload");
 const recentFilesContainer = document.getElementById("recentFiles");
 const searchInput = document.getElementById("keywordSearch");
 const tableDisplay = document.getElementById("tableDisplay");
-const pdfViewer = document.getElementById("pdfViewer");
-function reload() {
-    location.reload();
-}
-// Array to store fetched files
-let allFiles = [];
-
+const pdfFile = document.getElementById("pdfCanvas");
+// API Endpoints
 const API_URL = "https://xt6gsecaplq7ig2w2sg65fcqia0uihao.lambda-url.us-east-2.on.aws/";
 const FILES_ENDPOINT = "https://www.docfacet.com/vsr/flslt";
 const UPLOAD_ENDPOINT = "https://www.docfacet.com/vsr/upldfile";
 
+// Store all fetched files
+let allFiles = [];
+
+// Reload Page Function
+function reload() {
+    location.reload();
+}
+
+// On Page Load, Fetch and Render Files
 window.onload = async function () {
     await fetchFiles();
     renderFiles();
     showNoDataMessage();
 };
 
+// File Upload Event Listener
 fileUploadInput.addEventListener("change", handleFileSelection);
 
+// Show "No Data Available" Message
 function showNoDataMessage() {
     if (allFiles.length === 0) {
         tableDisplay.innerHTML = `
@@ -34,14 +40,15 @@ function showNoDataMessage() {
     }
 }
 
+// Handle File Selection and Upload
 function handleFileSelection(event) {
     const files = event.target.files;
     if (files.length > 0) {
-        const file = files[0];
-        uploadFile(file);
+        uploadFile(files[0]);
     }
 }
 
+// Upload File to Server
 async function uploadFile(file) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -73,7 +80,7 @@ async function uploadFile(file) {
             }
 
             loadingMessage.textContent = "File uploaded successfully!";
-            await fetchFiles();
+            await fetchFiles(); // Refresh file list
         } catch (error) {
             console.error("Error uploading file:", error.message);
             loadingMessage.textContent = "Error uploading file. Please try again.";
@@ -85,6 +92,7 @@ async function uploadFile(file) {
     };
 }
 
+// Fetch Files from Server
 async function fetchFiles() {
     try {
         const response = await fetch(FILES_ENDPOINT, {
@@ -105,6 +113,7 @@ async function fetchFiles() {
     }
 }
 
+// Render File List
 function renderFiles() {
     recentFilesContainer.innerHTML = "";
 
@@ -114,14 +123,25 @@ function renderFiles() {
             fileItem.classList.add("fileItem");
             fileItem.title = fileName;
 
-            fileItem.innerHTML = `
-                <input type="radio" name="recentFile" id="file_${index}" class="fileRadio" title="${fileName}" onchange="loadPDF('${fileName}')">
-                <label for="file_${index}" class="fileLabel" title="${fileName}">
-                    <span class="fileIcon">📄</span>
-                    <span class="fileName">${fileName}</span>
-                </label>
+            let input = document.createElement("input");
+            input.type = "radio";
+            input.name = "recentFile";
+            input.id = `file_${index}`;
+            input.classList.add("fileRadio");
+            input.title = fileName;
+
+            let label = document.createElement("label");
+            label.setAttribute("for", `file_${index}`);
+            label.classList.add("fileLabel");
+            label.title = fileName;
+
+            label.innerHTML = `
+                <span class="fileIcon">📄</span>
+                <span class="fileName">${fileName}</span>
             `;
 
+            fileItem.appendChild(input);
+            fileItem.appendChild(label);
             recentFilesContainer.appendChild(fileItem);
         });
     } else {
@@ -129,6 +149,8 @@ function renderFiles() {
     }
 }
 
+
+// Handle Search Functionality
 async function handleSearch() {
     const searchValue = searchInput.value.trim();
     const selectedFile = document.querySelector('input[name="recentFile"]:checked');
@@ -136,12 +158,11 @@ async function handleSearch() {
     if (selectedFile && searchValue !== "") {
         const fileName = selectedFile.nextElementSibling.innerText.split("\n")[1];
         const keywords = [...new Set(
-            searchValue
-                .split(',')
-                .map(keyword => keyword.trim().toLowerCase()) // Convert to lowercase
-                .filter(item => item !== '') // Remove empty values
+            searchValue.split(',').map(keyword => keyword.trim().toLowerCase()).filter(item => item !== '')
         )];
+
         const requestParams = { payload: { pdf_file_name: fileName, keywords: keywords } };
+        console.log(requestParams);
 
         tableDisplay.innerHTML = "";
 
@@ -157,6 +178,17 @@ async function handleSearch() {
 
             const data = await response.json();
             displaySearchResults(data);
+
+            //PDF URL
+            console.log(data.object_url);
+            if (!pdfFile.src || pdfFile.src === "") {
+                pdfSrc = data.object_url;
+                pdfFile.src = `${pdfSrc}#page=1`; // Load PDF on the first page initially
+            } else {
+                pdfSrc = data.object_url;
+                pdfFile.dataset.src = pdfSrc;
+            }
+
         } catch (error) {
             tableDisplay.innerHTML = `<p class="NoData">Result : ${error.message}</p>`;
         }
@@ -166,40 +198,93 @@ async function handleSearch() {
     }
 }
 
+// Display Search Results in Table
 function displaySearchResults(data) {
-    if (data && Object.keys(data).length > 0) {
-        let resultHtml = "<table class='resultTable' border='1'><thead><tr><th>Key</th><th>Page No</th><th>Type</th><th>Details</th></tr></thead><tbody>";
+    console.log("API Response:", data); // Debugging
 
-        for (let key in data) {
-            if (data[key]) {
-                data[key].forEach(item => {
-                    let id = item[0];
-                    let type = item[1].toUpperCase();
-                    let details = Array.isArray(item[2]) ? item[2].join(", ") : item[2];
-
-                    // Highlight only the keyword corresponding to this row's key
-                    details = highlightSpecificKeyword(details, key);
-
-                    resultHtml += `<tr onmouseover="showExactPageInDOC(${id})"><td>${key}</td><td>${id}</td><td>${type}</td><td>${details}</td></tr>`;
-                });
-            } else {
-                resultHtml += `<tr><td colspan='4' style="color:red">No data available for ${key}</td></tr>`;
-            }
-        }
-
-        resultHtml += "</tbody></table>";
-        tableDisplay.innerHTML = resultHtml;
-    } else {
+    if (!data || !data.search_results || Object.keys(data.search_results).length === 0) {
         tableDisplay.innerHTML = "<p>No matching results found.</p>";
+        return;
     }
+
+    let resultHtml = `
+        <table class='resultTable' border='1'>
+            <thead>
+                <tr>
+                    <th>Keyword</th>
+                    <th>Page No</th>
+                    <th>Type</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    const searchResults = data.search_results; // Extract the actual search results
+
+    for (let keyword in searchResults) {
+        let entries = searchResults[keyword];
+
+        if (Array.isArray(entries)) {
+            entries.forEach(entry => {
+                if (Array.isArray(entry) && entry.length >= 3) {
+                    let page = entry[0];
+                    let type = entry[1].toUpperCase();
+                    let details = Array.isArray(entry[2]) ? entry[2].join(", ") : entry[2];
+
+                    details = highlightSpecificKeyword(details, keyword);
+
+                    resultHtml += `
+                        <tr onclick="showPdfPage(${page})">
+                            <td>${keyword}</td>
+                            <td>${page}</td>
+                            <td>${type}</td>
+                            <td>${details}</td>
+                        </tr>`;
+                }
+            });
+        } else {
+            resultHtml += `<tr><td colspan='4' style="color:red">No valid data for ${keyword}</td></tr>`;
+        }
+    }
+
+    resultHtml += "</tbody></table>";
+    tableDisplay.innerHTML = resultHtml;
 }
 
-// Function to highlight only the specific key for each row
+
+// Highlight Specific Keywords in Search Results
 function highlightSpecificKeyword(text, keyword) {
     if (!keyword) return text;
-
-    // Create a case-insensitive regex for the specific key
     const regex = new RegExp(`(${keyword})`, 'gi');
-
     return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+//--------------------------------------------------------------------------------------------------------------
+function showPdfPage(pageNum) {
+    console.log("Navigating to page:", pageNum);
+
+    // Ensure pdfFile is a valid embedded PDF object
+    if (!pdfFile) {
+        console.error("PDF file element is not defined.");
+        return;
+    }
+
+    // Ensure the PDF URL is stored correctly
+    let baseUrl = pdfFile.dataset.src || pdfFile.src.split('#')[0];
+
+    // Check if baseUrl is an actual PDF URL (not your webpage URL)
+    if (!baseUrl.endsWith(".pdf")) {
+        console.error("Invalid PDF URL detected:", baseUrl);
+        return;
+    }
+
+    // Construct the new URL with the desired page number
+    const newUrl = `${baseUrl}#page=${pageNum}`;
+
+    // Force a refresh by resetting the iframe source
+    pdfFile.src = "";
+    setTimeout(() => {
+        pdfFile.src = newUrl;
+        console.log("Updated PDF source:", pdfFile.src);
+    }, 100); // Small delay to ensure proper reload
 }
