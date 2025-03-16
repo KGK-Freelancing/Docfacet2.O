@@ -149,6 +149,59 @@ function renderFiles() {
     }
 }
 
+// Global variable to store extracted keywords from Excel
+let extractedKeywords = new Set();
+
+// Extract Excel File
+document.getElementById("excelFile").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validExtensions = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"];
+    if (!validExtensions.includes(file.type)) {
+        alert("Invalid file type! Please upload an Excel file (.xls or .xlsx).");
+        event.target.value = ""; // Reset file input
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        // Get first sheet name
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert sheet to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Extract new keywords while maintaining case sensitivity
+        let newKeywords = jsonData.flat().filter(item => typeof item === "string" && item.trim() !== "");
+
+        // Add manually entered values from the search bar
+        let existingSearchValues = searchInput.value.split(",").map(val => val.trim()).filter(val => val !== "");
+
+        // Merge all keywords (manual + extracted) into the Set to remove duplicates
+        existingSearchValues.forEach(keyword => extractedKeywords.add(keyword));
+        newKeywords.forEach(keyword => extractedKeywords.add(keyword));
+
+        // Update search input with unique keywords
+        searchInput.value = Array.from(extractedKeywords).join(", ");
+
+        console.log("Updated Extracted Keywords:", Array.from(extractedKeywords));
+
+        alert("Keyword Excel file uploaded successfully!");
+    };
+
+    reader.readAsArrayBuffer(file);
+
+    // Reset file input to allow re-uploading the same file with new rows
+    event.target.value = "";
+});
+
+
 
 // Handle Search Functionality
 pdfObjectUrl = "";
@@ -156,13 +209,21 @@ async function handleSearch() {
     const searchValue = searchInput.value.trim();
     const selectedFile = document.querySelector('input[name="recentFile"]:checked');
 
-    if (selectedFile && searchValue !== "") {
+    if (selectedFile && (searchValue !== "" || extractedKeywords.length > 0)) {
         const fileName = selectedFile.nextElementSibling.innerText.split("\n")[1];
-        const keywords = [...new Set(
-            searchValue.split(',').map(keyword => keyword.trim().toLowerCase()).filter(item => item !== '')
-        )];
 
-        const requestParams = { payload: { pdf_file_name: fileName, keywords: keywords } };
+        // Combine search input keywords and extracted keywords from Excel
+        const keywords = [
+            ...searchValue.split(',').map(keyword => keyword.trim()).filter(item => item !== ''),
+            ...extractedKeywords
+        ];
+
+        // Remove duplicate keywords while maintaining case sensitivity
+        const uniqueKeywords = [...new Set(keywords)];
+
+        console.log("Final Keywords List:", uniqueKeywords);
+
+        const requestParams = { payload: { pdf_file_name: fileName, keywords: uniqueKeywords } };
         console.log(requestParams);
 
         tableDisplay.innerHTML = "";
@@ -199,6 +260,8 @@ async function handleSearch() {
         alert("Please select a file and enter a keyword to search.");
     }
 }
+
+
 
 
 // Display Search Results in Table
@@ -265,7 +328,7 @@ function highlightSpecificKeyword(text, keyword) {
 //--------------------------------------------------------------------------------------------------------------
 function showPdfPage(pageNum) {
     console.log("pdfObjectUrl " + pdfObjectUrl);
-    
+
     console.log("Navigating to page:", pageNum);
 
     // Ensure pdfFile is a valid embedded PDF object
@@ -283,8 +346,13 @@ function showPdfPage(pageNum) {
         return;
     }
 
+
     // Construct the new URL with the desired page number
     const newUrl = `${baseUrl}#page=${pageNum}`;
+
+    openNewTab = document.getElementById("pdfInNewTab");
+    openNewTab.href = newUrl;
+    openNewTab.target = "_blank";
 
     // Force a refresh by resetting the iframe source
     pdfFile.src = "";
@@ -293,3 +361,5 @@ function showPdfPage(pageNum) {
         console.log("Updated PDF source:", pdfFile.src);
     }, 100); // Small delay to ensure proper reload
 }
+
+
