@@ -176,7 +176,10 @@ document.getElementById("excelFile").addEventListener("change", function (event)
 
         // Convert sheet to JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+        
+        // Clear extractedKeywords to prevent old values from persisting
+        extractedKeywords.clear();
+        
         // Extract new keywords while maintaining case sensitivity
         let newKeywords = jsonData.flat().filter(item => typeof item === "string" && item.trim() !== "");
 
@@ -205,59 +208,70 @@ document.getElementById("excelFile").addEventListener("change", function (event)
 
 // Handle Search Functionality
 pdfObjectUrl = "";
+
 async function handleSearch() {
-    const searchValue = searchInput.value.trim();
+    // Get the current search bar values
+    let searchValue = searchInput.value.trim();
+    // alert(JSON.stringify(searchValue)); // Debugging
+
     const selectedFile = document.querySelector('input[name="recentFile"]:checked');
+    if (!selectedFile) {
+        alert("Please select a file to search in.");
+        return;
+    }
 
-    if (selectedFile && (searchValue !== "" || extractedKeywords.length > 0)) {
-        const fileName = selectedFile.nextElementSibling.innerText.split("\n")[1];
+    const fileName = selectedFile.nextElementSibling.innerText.split("\n")[1];
 
-        // Combine search input keywords and extracted keywords from Excel
-        const keywords = [
-            ...searchValue.split(',').map(keyword => keyword.trim()).filter(item => item !== ''),
-            ...extractedKeywords
-        ];
+    // Extract keywords from search input (comma-separated)
+    let searchKeywords = searchValue 
+        ? searchValue.split(',').map(keyword => keyword.trim()).filter(item => item !== '') 
+        : [];
 
-        // Remove duplicate keywords while maintaining case sensitivity
-        const uniqueKeywords = [...new Set(keywords)];
+    // Use only search bar values; extractedKeywords should not override manual input
+    let keywords = searchKeywords.length > 0 ? searchKeywords : [...extractedKeywords];
 
-        console.log("Final Keywords List:", uniqueKeywords);
+    // Remove duplicates while maintaining case sensitivity
+    let uniqueKeywords = [...new Set(keywords)];
 
-        const requestParams = { payload: { pdf_file_name: fileName, keywords: uniqueKeywords } };
-        console.log(requestParams);
+    // Ensure at least one keyword is present
+    if (uniqueKeywords.length === 0) {
+        alert("Please enter at least one keyword to search.");
+        return;
+    }
 
-        tableDisplay.innerHTML = "";
+    console.log("Final Keywords List:", uniqueKeywords);
 
-        try {
-            const response = await fetch(`${API_URL}?payload=${encodeURIComponent(JSON.stringify(requestParams))}`, {
-                method: "POST",
-                body: JSON.stringify(requestParams)
-            });
+    const requestParams = { payload: { pdf_file_name: fileName, keywords: uniqueKeywords } };
+    console.log("Request Parameters:", requestParams);
 
-            if (!response.ok) {
-                throw new Error("No Result Found");
-            }
+    tableDisplay.innerHTML = "";
 
-            const data = await response.json();
-            displaySearchResults(data);
+    try {
+        const response = await fetch(`${API_URL}?payload=${encodeURIComponent(JSON.stringify(requestParams))}`, {
+            method: "POST",
+            body: JSON.stringify(requestParams)
+        });
 
-            // PDF URL
-            pdfObjectUrl = data.object_url;
-            console.log("New PDF URL:", pdfObjectUrl);
-
-            // Reset the PDF iframe to force reload
-            pdfFile.src = "";
-            setTimeout(() => {
-                pdfFile.src = `${pdfObjectUrl}#page=1`; // Load PDF from the first page
-                pdfFile.dataset.src = pdfObjectUrl;
-            }, 100); // Small delay to ensure refresh
-
-        } catch (error) {
-            tableDisplay.innerHTML = `<p class="NoData">Result : ${error.message}</p>`;
+        if (!response.ok) {
+            throw new Error("No Result Found");
         }
-    } else {
-        showNoDataMessage();
-        alert("Please select a file and enter a keyword to search.");
+
+        const data = await response.json();
+        displaySearchResults(data);
+
+        // Update the PDF URL
+        pdfObjectUrl = data.object_url;
+        console.log("New PDF URL:", pdfObjectUrl);
+
+        // Reset the PDF iframe to force reload
+        pdfFile.src = "";
+        setTimeout(() => {
+            pdfFile.src = `${pdfObjectUrl}#page=1`; // Load PDF from the first page
+            pdfFile.dataset.src = pdfObjectUrl;
+        }, 100); // Small delay to ensure refresh
+
+    } catch (error) {
+        tableDisplay.innerHTML = `<p class="NoData">Result: ${error.message}</p>`;
     }
 }
 
