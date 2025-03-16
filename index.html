@@ -8,65 +8,71 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+</head >
 
-</head>
+            <body class="body">
+                <div class="navBar">
+                    <img class="logo" src="fulllogo.png" alt="Logo" onclick="reload()">
+                        <input type="file" id="fileUpload" class="fileInput">
+                            <label for="fileUpload" class="fileUpload">
+                                <i class="fas fa-upload"></i> &nbsp;&nbsp; Upload File
+                            </label>
+                            <div id="loading-spinner" style="display: none;">
+                                <div class="spinner"></div>
+                                <p id="loading-message">Uploading...</p> <!-- Message area -->
+                            </div>
+                        </div>
+                        <div class="filesAndCont">
+                            <div class="column1">
+                                <p>Recent Files</p>
+                                <div class="recentFiles" id="recentFiles">
+                                    <!-- Files will be displayed here -->
+                                </div>
+                            </div>
+                            <div class="column2">
+                                <div class="tableContent">
+                                    <div class="searchBarCont">
+                                        <div class="searchBar">
+                                            <input type="search" id="keywordSearch" placeholder="Search tables by keywords...">
+                                                <input type="file" id="excelFile" />
+                                                <label for="excelFile" class="excelFileIcon" title="Upload an Excel file containing keywords to display the table">
+                                                    <i class="fa-solid fa-upload" ></i>
+                                                </label>
+                                                <i class="fa-solid fa-magnifying-glass" onclick="handleSearch()"></i>
+                                        </div>
+                                    </div>
+                                    <div class="table" id="tableDisplay">
 
-<body class="body">
-    <div class="navBar">
-        <img class="logo" src="fulllogo.png" alt="Logo" onclick="reload()">
-        <input type="file" id="fileUpload" class="fileInput">
-        <label for="fileUpload" class="fileUpload">
-            <i class="fas fa-upload"></i> &nbsp;&nbsp; Upload File
-        </label>
-        <div id="loading-spinner" style="display: none;">
-            <div class="spinner"></div>
-            <p id="loading-message">Uploading...</p> <!-- Message area -->
-        </div>
-    </div>
-    <div class="filesAndCont">
-        <div class="column1">
-            <p>Recent Files</p>
-            <div class="recentFiles" id="recentFiles">           
-                <!-- Files will be displayed here -->
-            </div>
-        </div>
-        <div class="column2">
-            <div class="tableContent">
-                <div class="searchBarCont">
-                    <div class="searchBar">
-                        <input type="search" id="keywordSearch" placeholder="Search tables by keywords...">
-                        <i class="fa-solid fa-magnifying-glass" onclick="handleSearch()"></i>
-                    </div>
-                </div>
-                <div class="table" id="tableDisplay">
-                    
-                    <!-- Search results table will be displayed here -->
-                     <img src="47718913_9170826.jpg" alt="No Data Found" class="noDataFound">
-                </div>
-            </div>
-            <div class="document">
-                <div>
-                    <p class="docHead">Document</p>
-                </div>
-                <div class="showDoc">
-                   
-                     <!-- <canvas id="pdfCanvas"></canvas> -->
-                      <iframe data-src="" frameborder="0" id="pdfCanvas"></iframe>
-                      <!-- <iframe 
-                      src="https://vsr-s3.s3.us-east-2.amazonaws.com/Materials+Selection+Guidelines.pdf" 
-                      width="100%" 
-                      height="600px" >
-                      
-                  </iframe> -->
-                  
+                                        <!-- Search results table will be displayed here -->
+                                        <img src="47718913_9170826.jpg" alt="No Data Found" class="noDataFound">
+                                    </div>
+                                </div>
+                                <div class="document">
+                                    <div class="documentHead">
+                                        <p class="docHead">Document</p>
+                                        <a class="pdfInNewTab" id="pdfInNewTab" href="" title="Open in New Tab"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                    </div>
+                                    <div class="showDoc">
 
-                </div>
-            </div>
-        </div>
-    </div>
+                                        <!-- <canvas id="pdfCanvas"></canvas> -->
+                                        <iframe data-src="" frameborder="0" id="pdfCanvas"></iframe>
+                                        <!-- <iframe
+                                            src="https://vsr-s3.s3.us-east-2.amazonaws.com/Materials+Selection+Guidelines.pdf"
+                                            width="100%"
+                                            height="600px" >
 
-    <!-- JavaScript for functionality -->
-    <script src="index.js"></script>
-</body>
+                                        </iframe> -->
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- JavaScript for functionality -->
+                        <script src="index.js"></script>
+    </body>
 
 </html>
