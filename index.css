@@ -361,18 +361,21 @@
 
 /* Define column widths: first 3 columns = smaller, last column = wider */
 .resultTable th:nth-child(1) {
+    width: 25%;
+}
+.resultTable th:nth-child(2),
+.resultTable td:nth-child(2) {
     width: 15%;
 }
-
-.resultTable td:nth-child(1),
-.resultTable th:nth-child(2),
-.resultTable td:nth-child(2),
 .resultTable th:nth-child(3),
 .resultTable td:nth-child(3) {
-    width: 9%;
-    /* Each of the first 3 columns takes 15% */
+    width: 7%;
+    text-align: center;
 }
-
+.resultTable th:nth-child(4),
+.resultTable td:nth-child(4) {
+    width: 7%;
+}
 
 .resultTable th {
     background-color: #00aaff93;
@@ -380,6 +383,7 @@
     text-align: center;
     color: #0056b3;
 }
+
 
 .highlight {
     background-color: yellow;
@@ -480,4 +484,17 @@
 
 .pdfInNewTab{
     background-color: transparent;
+}
+#downloadResult{
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    top: 19px;
+    right: 30px;
+    cursor: pointer;
+}
+#showAsSelected{
+    background-color: #0056b3;
 }
