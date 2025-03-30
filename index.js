@@ -213,7 +213,7 @@ document.getElementById("excelFile").addEventListener("change", function (event)
         displayKeywordOnly(keywordToDocsMap);
         displayDocumentsOnly(keywordToDocsMap);
 
-        // ✅ Reset the file input to allow re-uploading the same file
+        // Reset the file input to allow re-uploading the same file
         fileInput.value = "";
     };
 
@@ -277,7 +277,7 @@ function displayKeywordOnly(map) {
 var extractedDocuments = "";
 
 function displayDocumentsOnly(map) {
-    // ✅ Clear previous extractedDocuments before adding new ones
+    //  Clear previous extractedDocuments before adding new ones
     extractedDocuments = "";
 
     let documents = [];
@@ -286,12 +286,12 @@ function displayDocumentsOnly(map) {
         documents = documents.concat(docList); // Flatten array instead of nesting
     });
 
-    // ✅ Store only the new sheet's documents
+    // Store only the new sheet's documents
     extractedDocuments = documents.join(", ");
 
     console.log("Extracted Documents from new sheet:", extractedDocuments);
 
-    // ✅ Display documents in UI (if applicable)
+    //  Display documents in UI (if applicable)
     const documentDisplay = document.getElementById("documentList"); // Make sure this exists in HTML
     if (documentDisplay) {
         documentDisplay.innerHTML = documents.map(doc => `<li>${doc}</li>`).join("");
@@ -299,7 +299,23 @@ function displayDocumentsOnly(map) {
 }
 
 
-
+searchInput.addEventListener('input', function() {
+    if (this.value === '') {
+      // Your clear logic here
+      console.log('Search input cleared!');
+      // Call any other functions or perform actions you need
+      handleClear();
+    }
+  });
+  
+  function handleClear() {
+      // Add logic here that should be executed when the input is cleared.
+      console.log("Clear function has been called");
+      extractedDocuments = "";
+      // example: reset search results
+      // example: hide a results div.
+  }
+  
 
 
 // Show loading spinner and message
@@ -371,7 +387,7 @@ async function handleSearch() {
     console.log("Unique File Names:", Array.from(uniqueFileNames));
 
     if (uniqueFileNames.size === 0) {
-        alert("No valid file names found for search.");
+        alert("Please Select Atleast One File to Search.");
         loadingSpinner.style.display = "none";
         return;
     }
