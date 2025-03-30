@@ -149,9 +149,13 @@ function renderFiles() {
     }
 }
 
+
+
 // Global object to store keywords and their associated documents
 let keywordToDocsMap = {};
 
+// Reference to file name display element
+const fileNameDisplay = document.getElementById("fileNameDisplay");
 
 document.getElementById("excelFile").addEventListener("change", function (event) {
     const fileInput = event.target;
@@ -162,10 +166,15 @@ document.getElementById("excelFile").addEventListener("change", function (event)
         return;
     }
 
-    // Store manually entered keywords before processing the file
-    const manualKeyword = searchInput.value.trim();
-    if (manualKeyword && !keywordToDocsMap[manualKeyword]) {
-        keywordToDocsMap[manualKeyword] = [];
+    // Clear existing keyword map
+    keywordToDocsMap = {};
+
+    // Reset search input field
+    searchInput.value = "";
+
+    // Update file name display
+    if (fileNameDisplay) {
+        fileNameDisplay.textContent = `Uploaded File: ${file.name}`;
     }
 
     const reader = new FileReader();
@@ -192,23 +201,19 @@ document.getElementById("excelFile").addEventListener("change", function (event)
                 .map(item => item.toString().trim());
 
             if (keyword) {
-                // If keyword exists, merge it with existing documents
-                if (!keywordToDocsMap[keyword]) {
-                    keywordToDocsMap[keyword] = [];
-                }
-                keywordToDocsMap[keyword] = [...new Set([...keywordToDocsMap[keyword], ...documentList])];
+                keywordToDocsMap[keyword] = documentList;
             }
         });
 
         console.log("Final Keyword Map after file upload:", keywordToDocsMap);
-        alert("Keywords from file have been successfully merged!");
+        alert(`Keywords from "${file.name}" have been successfully updated!`);
 
         // Refresh display (if applicable)
         displayKeywordDocumentMap(keywordToDocsMap);
         displayKeywordOnly(keywordToDocsMap);
         displayDocumentsOnly(keywordToDocsMap);
 
-        // Reset the file input to allow re-uploading the same file
+        // ✅ Reset the file input to allow re-uploading the same file
         fileInput.value = "";
     };
 
@@ -270,38 +275,29 @@ function displayKeywordOnly(map) {
 
 // Function to display documents only
 var extractedDocuments = "";
+
 function displayDocumentsOnly(map) {
+    // ✅ Clear previous extractedDocuments before adding new ones
+    extractedDocuments = "";
+
     let documents = [];
 
     Object.values(map).forEach(docList => {
-        // documents = documents.concat(docList);
-        // console.log("Extracted Documents:", docList);
-        documents.push(docList);
-
+        documents = documents.concat(docList); // Flatten array instead of nesting
     });
-    extractedDocuments += documents;
 
+    // ✅ Store only the new sheet's documents
+    extractedDocuments = documents.join(", ");
 
+    console.log("Extracted Documents from new sheet:", extractedDocuments);
 
-    // // Check if documents are selected in recent files
-    // let selectedFiles = document.querySelectorAll('input[name="recentFile"]:checked');
-    // let selectedFileNames = new Set();
-
-    // selectedFiles.forEach(file => {
-    //     let fileName = file.nextElementSibling?.innerText.split("\n")[1];
-    //     if (fileName) selectedFileNames.add(fileName.trim());
-    // });
-
-    // console.log("Selected File Names:", Array.from(selectedFileNames));
-
-    // // Filter documents that are in selected files
-    // let filteredDocuments = documents.filter(doc => selectedFileNames.has(doc));
-
-    // console.log("Filtered Documents in Selected Files:", filteredDocuments);
-
-    // // Show filtered documents
-    // // tableDisplay.innerHTML = filteredDocuments.map(doc => `<li>${doc}</li>`).join("");
+    // ✅ Display documents in UI (if applicable)
+    const documentDisplay = document.getElementById("documentList"); // Make sure this exists in HTML
+    if (documentDisplay) {
+        documentDisplay.innerHTML = documents.map(doc => `<li>${doc}</li>`).join("");
+    }
 }
+
 
 
 
@@ -328,11 +324,11 @@ async function handleSearch() {
     let selectedFiles = document.querySelectorAll('input[name="recentFile"]:checked');
     // console.log("Selected Files (Before Removing Duplicates):", selectedFiles);
 
-    if (selectedFiles.length === 0) {
-        alert("Please select at least one file to search in.");
-        loadingSpinner.style.display = "none";
-        return;
-    }
+    // if (selectedFiles.length === 0) {
+    //     alert("Please select at least one file to search in.");
+    //     loadingSpinner.style.display = "none";
+    //     return;
+    // }
 
     // Extract keywords from search input (comma-separated)
     let searchKeywords = searchValue
@@ -346,9 +342,10 @@ async function handleSearch() {
         return;
     }
 
-    // Remove duplicates while maintaining case sensitivity
-    let uniqueKeywords = [...new Set(searchKeywords)];
+    // Remove duplicates regardless of case sensitivity
+    let uniqueKeywords = [...new Map(searchKeywords.map(item => [item.toLowerCase(), item])).values()];
     console.log("Final Keywords List:", uniqueKeywords);
+
 
     // Define the extracted document list
     var ExtractedDocList = extractedDocuments;
